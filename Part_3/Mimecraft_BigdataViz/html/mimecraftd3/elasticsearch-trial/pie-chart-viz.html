@@ -1,0 +1,287 @@
+<!-- Code from d3-graph-gallery.com -->
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html lang="en">
+<style>
+.box {
+        border: 1px solid #555555;
+        font-size: 1em;
+        margin: 0px 100px 10px 100px;
+        padding: 8px;
+        display: inline-block;
+    }
+</style>
+<head>
+	<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+  
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+	<!-- Load d3.js -->
+	<script src="https://d3js.org/d3.v4.js"></script>
+	<!-- Color scale -->
+	<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+	<script src="scripts/require.js"></script>
+	<title>Team 5 UFO Insights</title>
+    <!-- Bootstrap Core CSS -->
+    <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Scrolling Nav CSS -->
+    <link href="../../../css/scrolling-nav.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="../../../css/styles.css" rel="stylesheet">
+	<script src="scripts/require.js"></script>
+</head>
+
+<body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top">
+<!-- Navigation -->
+    <div id="nav-main">
+    <nav class="navbar mav-main navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header page-scroll">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                
+            </div>
+
+            <div class="collapse navbar-collapse navbar-ex1-collapse">  
+              <nav id="nav-wrap">
+                <ul class="nav navbar-nav navbar-custom">
+					<li class="current"><a class="page-scroll" href="../../../index.html#intro" style="color:white">Home</a></li>
+                    <li class="hidden"><a class="page-scroll" href="../../../index.html#intro" style="color:white"></a></li>
+                    <li><a class="page-scroll" href="../../../index.html#about" style="color:#ffffff">About</a></li>
+                    <li><a class="page-scroll" href="../../../index.html#features" style="color:#ffffff">Insights</a></li>
+                    <!--<li><a class="page-scroll" style="color:#ffffff" href="../../../index.html#learn-more">Partners</a></li>-->
+                </ul>
+              </nav>
+
+                <a href="http://usc.edu" class="pull-right">
+                  <img src="../../../images/usc-primary-logotype.svg" width="176px" height="38px">
+                </a>
+            </div>
+        </div>
+    </nav>
+  </div>
+  <br><br><br><br>
+  <div id="wrapper" style="text-align: center;">
+        <div class="box"><b>URL Type Pie Chart: Elastic Search</b>
+            <p>This pie chart shows the URL Classification based on URL labels : 'good' or 'bad'. Using an additional data set we have evaluated if a url is classified under a 'bad' category (meaning its a known spam link) while the others are categorized 'good'. We also have a category of url types and we analyze their distribution with url labels.</p>
+        </div>
+  </div>
+	<!-- Add 2 buttons 
+<button onclick="update(data1)">Good</button>
+<button onclick="update(data2)">Bad</button>-->
+	<div style="text-align: center;">
+		<select id="urlselect" onchange="search(this);">
+			<option value="--select url--">--select url label--</option>
+		</select>
+	</div>
+	<!-- Create a div where the graph will take place -->
+	<div id="my_dataviz_good" style="text-align: center;"></div>
+	<div id="my_dataviz_bad" style="text-align: center;"></div>
+
+	<script>
+
+
+
+		$(document).ready(function () {
+
+
+			//Populating dropdown containing years
+			year_array = ['good', 'bad'];
+
+			var select = document.getElementById("urlselect");
+			for (var i = 0; i < year_array.length; i++) {
+				var text = year_array[i];
+				var option = document.createElement("option");
+				option.setAttribute("value", text);
+				var textNode = document.createTextNode(text);
+				option.appendChild(textNode);
+				select.appendChild(option);
+			}
+
+		});
+
+		var value = "";
+
+		function search(selectObject) {
+
+			value = selectObject.value;
+			require(['scripts/elasticsearch.js'], function () {
+				var client = new elasticsearch.Client({
+					host: 'http://localhost:9200',
+					log: 'trace'
+				});
+
+				client.search({
+					index: 'piechart_es',
+					body: {
+
+						// Aggregate on the results
+
+						"query": {
+							"match_all": {}
+						},
+						"aggs": {
+							"goodurl": {
+								"filter": {
+									"term": {
+										"URL Label": "good"
+									}
+								},
+								"aggs": {
+									"urls": {
+										"terms": {
+											"field": "URL Classification.keyword"
+										}
+									}
+								}
+							},
+							"badurl": {
+								"filter": {
+									"term": {
+										"URL Label": "bad"
+									}
+								},
+								"aggs": {
+									"urls": {
+										"terms": {
+											"field": "URL Classification.keyword"
+										}
+									}
+								}
+							}
+						}
+
+					}
+				}).then(function (resp) {
+					var data1 = resp.aggregations.goodurl.urls.buckets;
+					var data2 = resp.aggregations.badurl.urls.buckets;
+					if (value == 'good') { update(data1, 0); }
+					if (value == 'bad') { update(data2, 1); }
+
+				}, function (err) {
+					console.trace(err.message);
+				});
+			});
+
+		}
+
+		function update(data, type) {
+			// set the dimensions and margins of the graph
+			var width = 1000
+			height = 450
+			margin = 40
+
+			// The radius of the pieplot is half the width or half the height (smallest one). I subtract a bit of margin.
+			var radius = Math.min(width, height) / 2 - margin
+			var labelr = radius - 50;
+			// append the svg object to the div called 'my_dataviz'
+			if (type == 0) {
+				document.getElementById("my_dataviz_bad").innerHTML = "";
+				document.getElementById("my_dataviz_good").innerHTML = "";
+				var svg = d3.select("#my_dataviz_good")
+					.append("svg")
+					.attr("width", width)
+					.attr("height", height)
+					.append("g")
+					.attr("transform", "translate(" + 250 + "," + height / 2 + ")");
+			}
+			else {
+				document.getElementById("my_dataviz_good").innerHTML = "";
+				document.getElementById("my_dataviz_bad").innerHTML = "";
+				var svg = d3.select("#my_dataviz_bad")
+					.append("svg")
+					.attr("width", width)
+					.attr("height", height)
+					.append("g")
+					.attr("transform", "translate(" + 250 + "," + height / 2 + ")");
+			}
+
+			// create 2 data_set
+			//var data2 = {Adult: 39, Arts: 14, Business:12, Computers:20}
+			//var data_label = {Adult: 112, Arts: 261, Business:4, Computers:6, Home:2, Kids:3, Reference:1, Science_good:1, Society_good:2}
+
+			// set the color scale
+			var color = d3.scaleOrdinal()
+				.domain(["Adult", "Arts", "Business", "Computers", "Home", "Kids", "Science", "Society", "Unclassified"])
+				.range(["blue", "gold", "darkgreen", "pink", "brown", "red", "grey1", "purple", "orange","black"]);
+
+			// A function that create / update the plot for a given variable
+
+			// Compute the position of each group on the pie:
+			var pie = d3.pie()
+				.value(function (d) { return d.doc_count; })
+				.sort(function (a, b) { return d3.ascending(a.key, b.key); }) // This make sure that group order remains the same in the pie chart
+			var data_ready = pie(data)
+
+			// map to data
+			var u = svg.selectAll("path")
+				.data(data_ready)
+
+			// Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
+			u
+				.enter()
+				.append('path')
+				.merge(u)
+				.transition()
+				.duration(1000)
+				.attr('d', d3.arc()
+					.innerRadius(0)
+					.outerRadius(radius)
+				)
+				.attr('fill', function (d) { return (color(d.data.key)) })
+				.attr("stroke", "white")
+				.style("stroke-width", "2px")
+				.style("opacity", 1)
+
+			// remove the group that is not present anymore
+			u
+				.exit()
+				.remove()
+			// create legends and annotations into the chart
+			var legend = svg.append("g")
+				.attr("class", "legend")
+				.attr("x", 250)
+				.attr("y", 0)
+				.attr("height", 200)
+				.attr("width", 800);
+
+			legend.selectAll('rect')
+				.data(data)
+				.enter()
+
+			var cnt = 0;
+
+			for (var i = 0; i < data.length; i++) {
+				item = data[i];
+				legend.append("rect")
+					.attr("x", 250)
+					.attr("y", 30 + 15 * cnt)
+					.attr("width", 10)
+					.attr("height", 10)
+					.style("fill", function (d) { return color(item.key) });
+
+				legend.append("text")
+					.attr("x", 270)
+					.attr("y", 40 + 15 * cnt)
+					.text(function (d) { return item.key + " COUNT: " + item.doc_count });
+
+				cnt += 1;
+
+			}
+
+		}
+
+		// Initialize the plot with the first dataset
+		//update(data1)
+	</script>
+</body>
+
+</html>
