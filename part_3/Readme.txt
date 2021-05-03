@@ -1,27 +1,4 @@
-Read me
-
-#################################################################
-General Information
-
- - Folder Description
->ES-Setup Files: Contains files needed for loading data into elastic search
->fraudEmail: input dataset and other source code for geoparser 
->Mimecraft_BigdataViz: Webpage design source code
->Zipped Files: Contains the tarred up gzipped files as required in Step5 of assignment
->faces: input dataset for ImageSpace
->featureTable_withCluster.csv: input dataset for generating_input_for_D3.ipynb jupyter notebook
->generating_input_for_D3.ipynb: jupyter notebook for generating input datasets for d3
->new_attacks.tsv: input dataset for generating_input_for_D3.ipynb jupyter notebook
-
-#################################################################
-
-1. generating_input_for_D3.ipynb
-  - Generate inputs for d3 visualizations using data files from HW1 and HW2
-      > inputs: featureTable_withCluster.csv (from HW1)
-                new_attacks.tsv (from HW2)
-      > Detailed descriptions are in the jupyter notebook file.
-###==========================================================================
-2. Running the Data Visualization Webpage (Requires “Mimecraft_BigdataViz” folder and “ES-Setup Files” folder)
+ Running the Data Visualization Webpage (Requires “Mimecraft_BigdataViz” folder and “ES-Setup Files” folder)
 	- Installation Requirements:
 	  > Install ElasticSearch (https://www.elastic.co/downloads/elasticsearch)
 		 - Download and unzip Elasticsearch
@@ -66,36 +43,7 @@ General Information
 		> tar -zcvf piechart_es_mapping.tar.gz piechart_es_mapping
 		> tar -zcvf piechart_es_data.tar.gz piechart_es_data
 
-###==========================================================================
-4. Geo-Parser
-	  1. download the git
-		  > git clone https://github.com/nasa-jpl-memex/GeoParser.git
-	  2. move to Docker folder from GeoParser
-		  > cd GeoParser\Docker
-	  3. Install GeoParser using Docker
-		  > docker pull nasajplmemex/geo-parser
-		  > docker-compose up -d
-	  4. visit the browser using http://localhost:8000
-	  5. go to "fraudEmail" folder which we submitted and run below codes
-		  > cd $HOME/fraudEmail
-		  > ./create-core.sh (or try sh create-core.sh)
-		  > ./add-fields.sh (or try sh add-fields.sh)
-	  6. open jupyter notebook and run Ingest fraudEmail data.ipynb
-	  7. go back to geoParser (http://localhost:8000)
-	  8. click on “Configure Index” Tab
-		- set Domain Name as "emailcontents"
-		- set Indexed Engine Path as "http://localhost:8983/solr/emailcontents/
-		- click on "Add Index"
-	  9. click on "Add/View Index" tab
-		- select the Domain name and Indexed Engine Path
-		- click on "View"
-		- click on "Geoparse"
-5. To get index files of Geo-Parser:
-	  1. In desktop docker, open CLI of container, docker_memex-geoparser_1, and go to folder at: /home/Solr/solr-5.3.1/server/solr; tar imagespace folder by “tar -zcvf emailcontents.tar.gz emailcontents”.
-	  2. Transfer the tar file from docker to local by “docker cp docker_memex-geoparser_1:/home/Solr/solr-5.3.1/server/solr/emailcontents.tar.gz .”
-
-###==========================================================================
-6. Image Space (using MacOS)
+Also set up and implement the Image Space (using MacOS):
 	  1. “git clone https://github.com/nasa-jpl-memex/image_space.git”
 	  2. Put ingested image folder inside the same directory as above folder (In our case, it’s named as faces; please unzip the file named faces.zip to use)
 	  3. Open docker and run (please replace “/Users/lilythegirl/Documents/image_space-master” and “/Users/lilythegirl/Documents/image_space-master/faces” with your local path):
@@ -107,9 +55,3 @@ General Information
 	  4. In desktop docker, open CLI of container, deploy_imagespace-solr_1, and go to folder at: /server/solr/mycores; tar imagespace folder by “tar -zcvf imagespace.tar.gz ./imagespace”.
 	  5. Transfer the tar file from docker to local by “docker cp deploy_imagespace-solr_1:/opt/solr/server/solr/mycores/imagespace.tar.gz .”
 
-###==========================================================================
-ZippedFiles Folder:
-  - piechart_es_mapping.tar.gz : This is the gzipped elasticsearch index mapping file
-  - piechart_es_data.tar.gz : This is the gzipped elasticsearch index data file
-  - imagespace.tar.gz : This is the gzipped imagespace solr searching index 
-  - emailcontents.tar.gz : This is the gzipped geo-parser solr searching index 
