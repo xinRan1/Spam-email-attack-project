@@ -46,6 +46,7 @@
 		> tar -zcvf piechart_es_data.tar.gz piechart_es_data
 
 Set up and implement the Image Space (using MacOS):
+
 	  1. “git clone https://github.com/nasa-jpl-memex/image_space.git”
 	  2. Put ingested image folder inside the same directory as above folder (In our case, it’s named as faces; please unzip the file named faces.zip to use)
 	  3. Open docker and run (please replace “/Users/lilythegirl/Documents/image_space-master” and “/Users/lilythegirl/Documents/image_space-master/faces” with your local path):
